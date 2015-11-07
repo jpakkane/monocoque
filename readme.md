@@ -13,6 +13,14 @@ the cockpit of a Formula one car is a monocoque. For more info see the [Wikipedi
 
 In a similar way the framework provides an encapsulation for your app and protects it against changing systems.
 
+## Is it a heavy duty framework like the ones we know from Java?
+
+Not at all. Basically all monocoque is is a project with a [Meson](http://mesonbuild.com) build definition and whose dependencies are statically linked in. This sample app uses SDL2 for the gui because it is a high quality and small portable library. You can use any gui toolkit you want as long as it can be linked statically.
+
+## Why would I ever want to distribute an app like this?
+
+Every now and then you need to ship a single standalone app to people. A single standalone exe is easy to send over email. It is also trivial to keep multiple different versions on the same machine with the extra knowledge that they can not accidentally read each others' data.
+
 ## Why don't the resource images have alpha channels?
 
 Because of [this bug](https://bugzilla.libsdl.org/show_bug.cgi?id=2515).
