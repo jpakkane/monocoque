@@ -9,7 +9,7 @@ gen = generator(embedder,
   arguments : ['@INPUT@', '@OUTPUT0@', '@OUTPUT1@']
 )
 
-resources = ['blue.bmp']
+resources = ['blue.bmp', 'red.bmp', 'green.bmp']
 gen_src = gen.process(resources)
 
 executable('mcdemo', 'main.cpp',

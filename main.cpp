@@ -25,6 +25,8 @@
 #include<cassert>
 #include<math.h>
 #include"blue.h"
+#include"red.h"
+#include"green.h"
 
 const int SCREEN_WIDTH = 1920/2;
 const int SCREEN_HEIGHT = 1080/2;
@@ -43,24 +45,37 @@ SDL_Texture* unpack(SDL_Renderer *rend, const unsigned char* data, size_t data_s
 
 struct resources {
     std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> blue_tex;
+    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> red_tex;
+    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> green_tex;
 
-    resources(SDL_Renderer *rend) : blue_tex(unpack(rend, blue, sizeof(blue)), SDL_DestroyTexture) {
+    resources(SDL_Renderer *rend) : blue_tex(unpack(rend, blue, sizeof(blue)), SDL_DestroyTexture),
+            red_tex(unpack(rend, red, sizeof(red)), SDL_DestroyTexture),
+            green_tex(unpack(rend, green, sizeof(green)), SDL_DestroyTexture){
         assert(blue_tex.get());
+        assert(red_tex.get());
+        assert(green_tex.get());
     }
 };
 
-void render(SDL_Renderer *rend, const resources &res, const double ratio) {
+void draw_single(SDL_Renderer *rend, SDL_Texture *tex, const double ratio) {
     SDL_Rect r;
-    assert(!SDL_SetRenderDrawColor(rend, 0, 0, 0, 0));
-    SDL_RenderClear(rend);
-    assert(!SDL_SetRenderDrawColor(rend, 255, 255, 255, 0));
     int centerx = SCREEN_WIDTH/2;
     int centery = SCREEN_HEIGHT/2;
     r.x = centerx - texw/2 + SCREEN_WIDTH*0.4*sin(2*M_PI*ratio);
     r.y = centery - texh/2 + SCREEN_HEIGHT*0.4*cos(2*2*M_PI*(ratio) + M_PI/2);
     r.w = texw;
     r.h = texh;
-    assert(!SDL_RenderCopy(rend, res.blue_tex.get(), nullptr, &r));
+    assert(!SDL_RenderCopy(rend, tex, nullptr, &r));
+
+}
+
+void render(SDL_Renderer *rend, const resources &res, const double ratio) {
+    assert(!SDL_SetRenderDrawColor(rend, 0, 0, 0, 0));
+    SDL_RenderClear(rend);
+    assert(!SDL_SetRenderDrawColor(rend, 255, 255, 255, 0));
+    draw_single(rend, res.blue_tex.get(), ratio);
+    draw_single(rend, res.red_tex.get(), ratio + 0.3333);
+    draw_single(rend, res.green_tex.get(), ratio + 0.6666);
     SDL_RenderPresent(rend);
 }
 
