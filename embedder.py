@@ -18,19 +18,20 @@
 # License along with Mcdemo; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-'''This file converts a binary file into a C const array source
-file that you can embed in your programs.'''
+'''This file converts a binary file into a const array source
+file that you can embed in your programs.
+'''
 
 import sys
 import os
 
 header_template = '''#pragma once
-extern const char %s[%d];
+extern const unsigned char %s[%d];
 '''
 
 source_template_header = '''#include"%s"
 
-const char %s[%d] = {'''
+const unsigned char %s[%d] = {'''
 source_footer= '''
 };
 '''
