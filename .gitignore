@@ -1,4 +1,5 @@
-.project
-.cproject
+/.project
+/.cproject
+/.settings
 /build
 
