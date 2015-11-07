@@ -29,6 +29,8 @@
 #include"red.h"
 #include"green.h"
 #include"startup.h"
+#include"shoot.h"
+#include"explode.h"
 
 const int SCREEN_WIDTH = 1920/2;
 const int SCREEN_HEIGHT = 1080/2;
@@ -50,7 +52,6 @@ void unpack_wav(const unsigned char *data, size_t data_size, Uint8 **audio_buf, 
     auto *io = SDL_RWFromConstMem(data, data_size);
     auto res = SDL_LoadWAV_RW(io, 1, &want, audio_buf, audio_len);
     assert(res);
-
 }
 
 struct audiocontrol {
@@ -90,11 +91,17 @@ struct resources {
 
     std::unique_ptr<Uint8, void(*)(Uint8*)> startup_sound;
     Uint32 startup_size;
+    std::unique_ptr<Uint8, void(*)(Uint8*)> shoot_sound;
+    Uint32 shoot_size;
+    std::unique_ptr<Uint8, void(*)(Uint8*)> explode_sound;
+    Uint32 explode_size;
 
     resources(SDL_Renderer *rend) : blue_tex(unpack_image(rend, blue, sizeof(blue)), SDL_DestroyTexture),
             red_tex(unpack_image(rend, red, sizeof(red)), SDL_DestroyTexture),
             green_tex(unpack_image(rend, green, sizeof(green)), SDL_DestroyTexture),
-            startup_sound(nullptr, SDL_FreeWAV) {
+            startup_sound(nullptr, SDL_FreeWAV),
+            shoot_sound(nullptr, SDL_FreeWAV),
+            explode_sound(nullptr, SDL_FreeWAV) {
         assert(blue_tex.get());
         assert(red_tex.get());
         assert(green_tex.get());
@@ -102,8 +109,12 @@ struct resources {
         unpack_wav(startup, sizeof(startup), &tmp, &startup_size);
         startup_sound.reset(tmp);
         tmp = nullptr;
+        unpack_wav(shoot, sizeof(shoot), &tmp, &shoot_size);
+        shoot_sound.reset(tmp);
+        tmp=nullptr;
+        unpack_wav(explode, sizeof(explode), &tmp, &explode_size);
+        explode_sound.reset(tmp);
     }
-
 };
 
 
@@ -154,8 +165,9 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend, SDL_AudioDeviceID adev, audio
                 case  SDLK_q:
                     return;
                 }
-            } else if(e.type == SDL_JOYBUTTONDOWN) {
-                return;
+                control.play_sample(res.explode_sound.get(), res.explode_size);
+            } else if(e.type == SDL_JOYBUTTONDOWN || e.type == SDL_MOUSEBUTTONDOWN) {
+                control.play_sample(res.shoot_sound.get(), res.shoot_size);
             }
         }
         render(rend, res, ((SDL_GetTicks() - start_time) % cycle)/double(cycle));
