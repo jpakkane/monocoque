@@ -56,11 +56,18 @@ void unpack_wav(const unsigned char *data, size_t data_size, Uint8 **audio_buf, 
 
 struct audiocontrol {
     std::mutex m;
+    SDL_AudioDeviceID dev; // Not a pointer, so using with std::unique_ptr is not easy.
     Uint8 *sample;
     int sample_size;
     int played_bytes;
 
-    audiocontrol() : sample(nullptr), sample_size(0), played_bytes(0) {
+    audiocontrol() : dev(0), sample(nullptr), sample_size(0), played_bytes(0) {
+    }
+
+    ~audiocontrol() {
+        if(dev) {
+            SDL_CloseAudioDevice(dev);
+        }
     }
 
     void play_sample(Uint8 *new_sample, Uint32 new_size) {
@@ -144,7 +151,7 @@ void render(SDL_Renderer *rend, const resources &res, const double ratio) {
     SDL_RenderPresent(rend);
 }
 
-void mainloop(SDL_Window *win, SDL_Renderer *rend, SDL_AudioDeviceID adev, audiocontrol &control) {
+void mainloop(SDL_Window *win, SDL_Renderer *rend, audiocontrol &control) {
     SDL_Event e;
     resources res(rend);
     auto start_time = SDL_GetTicks();
@@ -154,7 +161,7 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend, SDL_AudioDeviceID adev, audio
     SDL_GetRendererInfo(rend, &f);
     bool has_vsync = f.flags & SDL_RENDERER_PRESENTVSYNC;
     control.play_sample(res.startup_sound.get(), res.startup_size);
-    SDL_PauseAudioDevice(adev, 0);
+    SDL_PauseAudioDevice(control.dev, 0);
     while(true) {
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {
@@ -196,7 +203,6 @@ int main(int /*argc*/, char **/*argv*/) {
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> rend(SDL_CreateRenderer(win.get(), -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC),
             SDL_DestroyRenderer);
     assert(rend.get());
-    SDL_AudioDeviceID dev; // Not a pointer, so using with std::unique_ptr is not easy.
     audiocontrol control;
     // All our wav files are in this format so hardcode it and have SDL do all conversions.
     want.freq = 44100;
@@ -205,10 +211,9 @@ int main(int /*argc*/, char **/*argv*/) {
     want.samples = 4096;
     want.callback = audiocallback;
     want.userdata = &control;
-    dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
-    assert(dev);
+    control.dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
+    assert(control.dev);
 
-    mainloop(win.get(), rend.get(), dev, control);
-    SDL_CloseAudioDevice(dev);
+    mainloop(win.get(), rend.get(), control);
     return 0;
 }
