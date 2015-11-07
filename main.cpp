@@ -24,38 +24,93 @@
 #include<memory>
 #include<cassert>
 #include<math.h>
+#include<mutex>
 #include"blue.h"
 #include"red.h"
 #include"green.h"
+#include"startup.h"
 
 const int SCREEN_WIDTH = 1920/2;
 const int SCREEN_HEIGHT = 1080/2;
 const uint32_t FTIME = (1000/60);
+SDL_AudioSpec want, have;
 
 // For simplicity.
 const int texw = 100;
 const int texh = 100;
 
-SDL_Texture* unpack(SDL_Renderer *rend, const unsigned char* data, size_t data_size) {
+SDL_Texture* unpack_image(SDL_Renderer *rend, const unsigned char* data, size_t data_size) {
     auto *io = SDL_RWFromConstMem(data, data_size);
     std::unique_ptr<SDL_Surface, void(*)(SDL_Surface*)> s(SDL_LoadBMP_RW(io, 1), SDL_FreeSurface);
     assert(s.get());
     return SDL_CreateTextureFromSurface(rend, s.get());
 }
 
+void unpack_wav(const unsigned char *data, size_t data_size, Uint8 **audio_buf, Uint32 *audio_len) {
+    auto *io = SDL_RWFromConstMem(data, data_size);
+    auto res = SDL_LoadWAV_RW(io, 1, &want, audio_buf, audio_len);
+    assert(res);
+
+}
+
+struct audiocontrol {
+    std::mutex m;
+    Uint8 *sample;
+    int sample_size;
+    int played_bytes;
+
+    audiocontrol() : sample(nullptr), sample_size(0), played_bytes(0) {
+    }
+
+    void play_sample(Uint8 *new_sample, Uint32 new_size) {
+        std::lock_guard<std::mutex> l(m);
+        sample = new_sample;
+        sample_size = new_size;
+        played_bytes = 0;
+    }
+
+    void produce(Uint8 *stream, int len) {
+        std::lock_guard<std::mutex> l(m);
+        int written_bytes = 0;
+        if(played_bytes < sample_size) {
+            written_bytes = std::min(len, sample_size - played_bytes);
+            SDL_memmove(stream, sample, written_bytes);
+            played_bytes += written_bytes;
+        }
+        if(written_bytes < len) {
+            SDL_memset(stream + written_bytes, 0, len - written_bytes);
+        }
+    }
+};
+
 struct resources {
     std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> blue_tex;
     std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> red_tex;
     std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> green_tex;
 
-    resources(SDL_Renderer *rend) : blue_tex(unpack(rend, blue, sizeof(blue)), SDL_DestroyTexture),
-            red_tex(unpack(rend, red, sizeof(red)), SDL_DestroyTexture),
-            green_tex(unpack(rend, green, sizeof(green)), SDL_DestroyTexture){
+    std::unique_ptr<Uint8, void(*)(Uint8*)> startup_sound;
+    Uint32 startup_size;
+
+    resources(SDL_Renderer *rend) : blue_tex(unpack_image(rend, blue, sizeof(blue)), SDL_DestroyTexture),
+            red_tex(unpack_image(rend, red, sizeof(red)), SDL_DestroyTexture),
+            green_tex(unpack_image(rend, green, sizeof(green)), SDL_DestroyTexture),
+            startup_sound(nullptr, SDL_FreeWAV) {
         assert(blue_tex.get());
         assert(red_tex.get());
         assert(green_tex.get());
+        Uint8 *tmp = nullptr;
+        unpack_wav(startup, sizeof(startup), &tmp, &startup_size);
+        startup_sound.reset(tmp);
+        tmp = nullptr;
     }
+
 };
+
+
+void audiocallback(void *data, Uint8* stream, int len) {
+    auto control = reinterpret_cast<audiocontrol*>(data);
+    control->produce(stream, len);
+}
 
 void draw_single(SDL_Renderer *rend, SDL_Texture *tex, const double ratio) {
     SDL_Rect r;
@@ -66,7 +121,6 @@ void draw_single(SDL_Renderer *rend, SDL_Texture *tex, const double ratio) {
     r.w = texw;
     r.h = texh;
     assert(!SDL_RenderCopy(rend, tex, nullptr, &r));
-
 }
 
 void render(SDL_Renderer *rend, const resources &res, const double ratio) {
@@ -79,7 +133,7 @@ void render(SDL_Renderer *rend, const resources &res, const double ratio) {
     SDL_RenderPresent(rend);
 }
 
-void mainloop(SDL_Window *win, SDL_Renderer *rend) {
+void mainloop(SDL_Window *win, SDL_Renderer *rend, SDL_AudioDeviceID adev, audiocontrol &control) {
     SDL_Event e;
     resources res(rend);
     auto start_time = SDL_GetTicks();
@@ -88,6 +142,8 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend) {
     SDL_RendererInfo f;
     SDL_GetRendererInfo(rend, &f);
     bool has_vsync = f.flags & SDL_RENDERER_PRESENTVSYNC;
+    control.play_sample(res.startup_sound.get(), res.startup_size);
+    SDL_PauseAudioDevice(adev, 0);
     while(true) {
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {
@@ -122,10 +178,25 @@ int main(int /*argc*/, char **/*argv*/) {
     SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
     atexit(SDL_Quit);
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)>
-        win(SDL_CreateWindow("Mcdemo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0),
+        win(SDL_CreateWindow("Monocoque demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0),
                 SDL_DestroyWindow);
+    assert(win.get());
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> rend(SDL_CreateRenderer(win.get(), -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC),
             SDL_DestroyRenderer);
-    mainloop(win.get(), rend.get());
+    assert(rend.get());
+    SDL_AudioDeviceID dev; // Not a pointer, so using with std::unique_ptr is not easy.
+    audiocontrol control;
+    // All our wav files are in this format so hardcode it and have SDL do all conversions.
+    want.freq = 44100;
+    want.format = AUDIO_S16LSB;
+    want.channels = 1;
+    want.samples = 4096;
+    want.callback = audiocallback;
+    want.userdata = &control;
+    dev = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
+    assert(dev);
+
+    mainloop(win.get(), rend.get(), dev, control);
+    SDL_CloseAudioDevice(dev);
     return 0;
 }
