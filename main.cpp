@@ -23,26 +23,43 @@
 #include<cstdlib>
 #include<memory>
 #include<cassert>
+#include"blue.h"
 
 const int SCREEN_WIDTH = 1920/2;
 const int SCREEN_HEIGHT = 1080/2;
 const uint32_t FTIME = (1000/60);
 
-void render(SDL_Renderer *rend) {
+SDL_Texture* unpack(SDL_Renderer *rend, const unsigned char* data, size_t data_size) {
+    auto *io = SDL_RWFromConstMem(data, data_size);
+    std::unique_ptr<SDL_Surface, void(*)(SDL_Surface*)> s(SDL_LoadBMP_RW(io, 1), SDL_FreeSurface);
+    assert(s.get());
+    return SDL_CreateTextureFromSurface(rend, s.get());
+}
+
+struct resources {
+    std::unique_ptr<SDL_Texture, void(*)(SDL_Texture *)> blue_tex;
+
+    resources(SDL_Renderer *rend) : blue_tex(unpack(rend, blue, sizeof(blue)), SDL_DestroyTexture) {
+        assert(blue_tex.get());
+    }
+};
+
+void render(SDL_Renderer *rend, const resources &res) {
     SDL_Rect r;
-    assert(!SDL_SetRenderDrawColor(rend, 0, 0, 255, 0));
+    assert(!SDL_SetRenderDrawColor(rend, 0, 0, 0, 0));
     SDL_RenderClear(rend);
-    assert(!SDL_SetRenderDrawColor(rend, 255, 0, 0, 0));
+    assert(!SDL_SetRenderDrawColor(rend, 255, 255, 255, 0));
     r.x = 100;
     r.y = 100;
-    r.w = 200;
-    r.h = 200;
-    assert(!SDL_RenderFillRect(rend, &r));
+    r.w = 100;
+    r.h = 100;
+    assert(!SDL_RenderCopy(rend, res.blue_tex.get(), nullptr, &r));
     SDL_RenderPresent(rend);
 }
 
 void mainloop(SDL_Window *win, SDL_Renderer *rend) {
     SDL_Event e;
+    resources res(rend);
     auto last_frame = SDL_GetTicks();
     SDL_RendererInfo f;
     SDL_GetRendererInfo(rend, &f);
@@ -61,14 +78,14 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend) {
                 return;
             }
         }
-        render(rend);
+        render(rend, res);
         if(!has_vsync) {
             auto time_spent = SDL_GetTicks() - last_frame;
             if(time_spent < FTIME) {
                 SDL_Delay(FTIME - time_spent);
             }
         }
-        last_frame = SDL_GetTicks(); // Not accurate, but I don't care.
+        last_frame = SDL_GetTicks(); // Not accurate, but good enough.
     }
 }
 

@@ -11,3 +11,11 @@ Monocoque framework. The main features of Cocoon are the follwing:
 
 A monocoque is a construct where a small outer shell contains the innards. As an example
 the cockpit of a Formula one car is a monocoque.
+
+## Why don't the resource images have alpha channels?
+
+Because of [this bug](https://bugzilla.libsdl.org/show_bug.cgi?id=2515).
+
+## Contact
+
+`jpakkane at gmail`
