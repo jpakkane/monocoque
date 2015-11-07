@@ -22,10 +22,24 @@
 #include<cstdio>
 #include<cstdlib>
 #include<memory>
+#include<cassert>
 
 const int SCREEN_WIDTH = 1920/2;
 const int SCREEN_HEIGHT = 1080/2;
 const uint32_t FTIME = (1000/60);
+
+void render(SDL_Renderer *rend) {
+    SDL_Rect r;
+    assert(!SDL_SetRenderDrawColor(rend, 0, 0, 255, 0));
+    SDL_RenderClear(rend);
+    assert(!SDL_SetRenderDrawColor(rend, 255, 0, 0, 0));
+    r.x = 100;
+    r.y = 100;
+    r.w = 200;
+    r.h = 200;
+    assert(!SDL_RenderFillRect(rend, &r));
+    SDL_RenderPresent(rend);
+}
 
 void mainloop(SDL_Window *win, SDL_Renderer *rend) {
     SDL_Event e;
@@ -47,7 +61,7 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend) {
                 return;
             }
         }
-
+        render(rend);
         if(!has_vsync) {
             auto time_spent = SDL_GetTicks() - last_frame;
             if(time_spent < FTIME) {
