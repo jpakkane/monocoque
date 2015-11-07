@@ -15,8 +15,8 @@ gen = generator(embedder,
   arguments : ['@INPUT@', '@OUTPUT0@', '@OUTPUT1@']
 )
 
-resources = ['blue.bmp', 'red.bmp', 'green.bmp',
-  'startup.wav', 'shoot.wav', 'explode.wav']
+resources = ['res/blue.bmp', 'res/red.bmp', 'res/green.bmp',
+  'res/startup.wav', 'res/shoot.wav', 'res/explode.wav']
 gen_src = gen.process(resources)
 
 executable('mcdemo', 'main.cpp',
