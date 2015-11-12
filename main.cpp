@@ -23,7 +23,6 @@
 #include<cstdlib>
 #include<cassert>
 #include<math.h>
-#include<mutex>
 #include"blue.h"
 #include"red.h"
 #include"green.h"
