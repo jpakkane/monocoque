@@ -4,7 +4,6 @@ project('monocoque demo', 'cpp',
 sdl_sub = subproject('sdl2')
 sdl2_dep = sdl_sub.get_variable('sdl2_dep')
 sdl2main_dep = sdl_sub.get_variable('sdl2main_dep')
-sdl2 = dependency('sdl2')
 
 # Fixme: On release builds use
 # -static-libstdc++ on Linux
