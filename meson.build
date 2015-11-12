@@ -11,6 +11,7 @@ sdl2main_dep = sdl_sub.get_variable('sdl2main_dep')
 # -static-libstdc++ on Linux
 #'-static-libstdc++ -static-libgcc' on Windows/MinGW
 
+
 embedder = find_program('embedder.py')
 
 # Rule to convert binary files to source + header.
@@ -23,10 +24,12 @@ resources = ['res/blue.bmp', 'res/red.bmp', 'res/green.bmp',
   'res/startup.wav', 'res/shoot.wav', 'res/explode.wav']
 gen_src = gen.process(resources)
 
+link_args = []
+if cpp.get_id() == 'gcc' or host_machine.system() == 'linux'
+  link_args += ['-static-libstdc++', '-static-libgcc']
+endif
 if cpp.get_id() == 'msvc'
-  link_args = ['/SUBSYSTEM:WINDOWS']
-else
-  link_args = []
+  link_args += ['/SUBSYSTEM:WINDOWS']
 endif
 
 executable('mcdemo', 'main.cpp',
