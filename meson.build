@@ -7,11 +7,6 @@ sdl_sub = subproject('sdl2')
 sdl2_dep = sdl_sub.get_variable('sdl2_dep')
 sdl2main_dep = sdl_sub.get_variable('sdl2main_dep')
 
-# Fixme: On release builds use
-# -static-libstdc++ on Linux
-#'-static-libstdc++ -static-libgcc' on Windows/MinGW
-
-
 embedder = find_program('embedder.py')
 
 # Rule to convert binary files to source + header.

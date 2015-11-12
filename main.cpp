@@ -209,12 +209,12 @@ int main(int /*argc*/, char **/*argv*/) {
     assert(win);
     SDL_Renderer *rend(SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC));
     if(!rend) {
-      // Fall back to SW rendering.
-      rend = SDL_CreateRenderer(win, -1, 0);
-      if(!rend) {
-	printf("Renderer setup failed: %s.\n", SDL_GetError());
-	return 1;
-      }
+        printf("Falling back to sw rendering: %s\n", SDL_GetError());
+        rend = SDL_CreateRenderer(win, -1, 0);
+        if(!rend) {
+            printf("Renderer setup failed: %s\n", SDL_GetError());
+            return 1;
+        }
     }
     audiocontrol control;
     // All our wav files are in this format so hardcode it and have SDL do all conversions.
