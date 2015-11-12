@@ -54,6 +54,11 @@ void unpack_wav(const unsigned char *data, size_t data_size, Uint8 **audio_buf, 
     assert(res);
 }
 
+template<typename T>
+T min(const T &t1, const T &t2) {
+   return t1 < t2 ? t1 : t2;
+}
+
 struct audiocontrol {
     SDL_mutex *m;
     SDL_AudioDeviceID dev;
@@ -83,7 +88,7 @@ struct audiocontrol {
         SDL_LockMutex(m);
         int written_bytes = 0;
         if(played_bytes < sample_size) {
-            written_bytes = std::min(len, sample_size - played_bytes);
+	  written_bytes = min(len, sample_size - played_bytes);
             SDL_memmove(stream, sample, written_bytes);
             played_bytes += written_bytes;
         }
@@ -163,7 +168,7 @@ void mainloop(SDL_Window *win, SDL_Renderer *rend, audiocontrol &control) {
     auto last_frame = SDL_GetTicks();
     SDL_RendererInfo f;
     SDL_GetRendererInfo(rend, &f);
-    bool has_vsync = f.flags & SDL_RENDERER_PRESENTVSYNC;
+    int has_vsync = f.flags & SDL_RENDERER_PRESENTVSYNC;
     control.play_sample(res.startup_sound, res.startup_size);
     SDL_PauseAudioDevice(control.dev, 0);
     while(true) {
