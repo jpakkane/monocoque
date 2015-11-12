@@ -1,6 +1,9 @@
-project('monocoque demo', 'cpp')
+project('monocoque demo', 'cpp',
+  default_options : ['c_std=gnu99'])
 
-# Fixme, use subproject once SDL2 is ported.
+sdl_sub = subproject('sdl2')
+sdl2_dep = sdl_sub.get_variable('sdl2_dep')
+sdl2main_dep = sdl_sub.get_variable('sdl2main_dep')
 sdl2 = dependency('sdl2')
 
 # Fixme: On release builds use
@@ -21,4 +24,4 @@ gen_src = gen.process(resources)
 
 executable('mcdemo', 'main.cpp',
   gen_src,
-  dependencies : sdl2)
+  dependencies : [sdl2main_dep, sdl2_dep])

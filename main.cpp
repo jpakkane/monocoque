@@ -202,7 +202,10 @@ int main(int /*argc*/, char **/*argv*/) {
     assert(win.get());
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> rend(SDL_CreateRenderer(win.get(), -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC),
             SDL_DestroyRenderer);
-    assert(rend.get());
+    if(!rend.get()) {
+      printf("Renderer setup failed: %s.\n", SDL_GetError());
+      return 1;
+    }
     audiocontrol control;
     // All our wav files are in this format so hardcode it and have SDL do all conversions.
     want.freq = 44100;
