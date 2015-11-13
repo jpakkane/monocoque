@@ -6,13 +6,22 @@ This project demonstrates a simple Gui application using the Monocoque framework
  - all resources (images etc) are embedded inside the app
  - all dependencies come as source from [wrapdb](http://wrapdb.mesonbuild.com) automatically, no need to install dependencies on any platform
 
+## How to compile?
+
+Go into source root and issue the following commands:
+
+    mkdir build
+    cd build
+    meson ..
+    ninja
+
 ## Lots of frameworks do the same, what sets this one apart?
 
 The entire build definition of the project is 33 lines long. This covers all compilation steps on Linux, OSX and Windows, as well as all supporting pieces such as downloading and using dependencies, converting resource files into source and so on.
 
 This simplicity is made possible by the use of the [Meson build system](http://mesonbuild.com) and the corresponding Wrap dependency system which has been designed to support this use case natively.
 
-It should be noted that Meson does not force static linking, it works just fine with dynamic linking. This sample uses static linking for simplicity.
+It should be noted that Meson does not force static linking, it works just fine with dynamic linking.
 
 ## Is it a heavy duty framework like the ones we know from Java?
 
