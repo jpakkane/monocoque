@@ -14,7 +14,7 @@ This simplicity is made possible by the use of the [Meson build system](http://m
 
 ## Is it a heavy duty framework like the ones we know from Java?
 
-Not at all. Basically all monocoque is is a project with all its dependencies statically linked in. The demo app uses SDL2 for the gui because it is a high quality and small portable library. You can use any gui toolkit you want as long as it can be linked statically.
+Not at all. Basically all monocoque is is a project with all its dependencies statically linked in. The demo app uses SDL2 for the gui because it is a high quality and small portable library.
 
 ## Why would I ever want to distribute an app like this?
 
