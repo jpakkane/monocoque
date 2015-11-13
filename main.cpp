@@ -88,7 +88,7 @@ struct audiocontrol {
         SDL_LockMutex(m);
         int written_bytes = 0;
         if(played_bytes < sample_size) {
-	  written_bytes = min(len, sample_size - played_bytes);
+            written_bytes = min(len, sample_size - played_bytes);
             SDL_memmove(stream, sample, written_bytes);
             played_bytes += written_bytes;
         }
