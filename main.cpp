@@ -205,8 +205,11 @@ int main(int /*argc*/, char **/*argv*/) {
     }
     SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
     atexit(SDL_Quit);
-    SDL_Window *win(SDL_CreateWindow("Monocoque demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0));
-    assert(win);
+    SDL_Window *win(SDL_CreateWindow("Monocoque demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL));
+    if(!win) {
+        printf("Window creation failed: %s\n", SDL_GetError());
+        return 1;
+    }
     SDL_Renderer *rend(SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC));
     if(!rend) {
         printf("Falling back to sw rendering: %s\n", SDL_GetError());
