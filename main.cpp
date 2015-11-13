@@ -50,7 +50,7 @@ SDL_Texture* unpack_image(SDL_Renderer *rend, const unsigned char* data, size_t 
 
 void unpack_wav(const unsigned char *data, size_t data_size, Uint8 **audio_buf, Uint32 *audio_len) {
     SDL_RWops *io = SDL_RWFromConstMem(data, data_size);
-    auto res = SDL_LoadWAV_RW(io, 1, &want, audio_buf, audio_len);
+    SDL_AudioSpec *res = SDL_LoadWAV_RW(io, 1, &want, audio_buf, audio_len);
     assert(res);
 }
 
