@@ -12,6 +12,8 @@ The entire build definition of the project is 33 lines long. This covers all com
 
 This simplicity is made possible by the use of the [Meson build system](http://mesonbuild.com) and the corresponding Wrap dependency system which has been designed to support this use case natively.
 
+It should be noted that Meson does not force static linking, it works just fine with dynamic linking. This sample uses static linking for simplicity.
+
 ## Is it a heavy duty framework like the ones we know from Java?
 
 Not at all. Basically all monocoque is is a project with all its dependencies statically linked in. The demo app uses SDL2 for the gui because it is a high quality and small portable library.

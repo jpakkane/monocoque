@@ -1,5 +1,5 @@
 project('monocoque demo', 'cpp',
-  default_options : ['c_std=gnu99'])
+  default_options : ['c_std=gnu99', 'default_library=static'])
 
 cpp = meson.get_compiler('cpp')
 
